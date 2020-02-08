@@ -1,8 +1,7 @@
 {
-	"name": "@berhalak/ts-template",
-	"private": false,
+	"name": "@berhalak/orlean",
 	"version": "0.0.1",
-	"description": "Typescript template",
+	"description": "Typescript orlean like framework",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -13,14 +12,14 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/berhalak/ts-template.git"
+		"url": "git+https://github.com/berhalak/orlean.git"
 	},
 	"author": "",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/berhalak/ts-template/issues"
+		"url": "https://github.com/berhalak/orlean/issues"
 	},
-	"homepage": "https://github.com/berhalak/ts-template#readme",
+	"homepage": "https://github.com/berhalak/orlean#readme",
 	"devDependencies": {
 		"@types/jest": "^25.1.0",
 		"@types/node": "^13.5.0",
@@ -28,5 +27,10 @@
 		"ts-jest": "^25.0.0",
 		"ts-node": "^8.6.2",
 		"typescript": "^3.7.5"
+	},
+	"dependencies": {
+		"@berhalak/js": "^0.0.7",
+		"@berhalak/monads": "^0.0.9",
+		"packer-js": "^2.0.0"
 	}
 }
