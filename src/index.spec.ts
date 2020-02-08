@@ -10,10 +10,16 @@ test('sample test', async () => {
 			Actor.instanceCount++;
 		}
 		counter = 0;
-		async count() {
+		async onWake() {
+			// read initial state
 			await fresh(this);
-			this.counter++;
+		}
+		async onSleep() {
+			// read initial state
 			await snap(this);
+		}
+		async count() {
+			this.counter++;
 			return this.counter;
 		}
 	}

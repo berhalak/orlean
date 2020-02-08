@@ -1,6 +1,6 @@
 {
 	"name": "@berhalak/orlean",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Typescript orlean like framework",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -8,6 +8,7 @@
 		"test": "jest",
 		"build": "tsc",
 		"compile": "tsc --noEmit",
+		"deploy": "tsc && npm publish",
 		"watch": "jest --watch"
 	},
 	"repository": {
@@ -21,10 +22,10 @@
 	},
 	"homepage": "https://github.com/berhalak/orlean#readme",
 	"devDependencies": {
-		"@types/jest": "^25.1.0",
-		"@types/node": "^13.5.0",
+		"@types/jest": "^25.1.2",
+		"@types/node": "^13.7.0",
 		"jest": "^25.1.0",
-		"ts-jest": "^25.0.0",
+		"ts-jest": "^25.2.0",
 		"ts-node": "^8.6.2",
 		"typescript": "^3.7.5"
 	},

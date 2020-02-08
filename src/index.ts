@@ -26,7 +26,12 @@ function getId(model: any) {
 }
 
 export class Silos {
-    static clear() {
+    static async clear() {
+        for (let actor of this.instance.ins.values()) {
+            if (typeof actor.onSleep == 'function') {
+                await actor.onSleep();
+            }
+        }
         this.instance.ins.clear();
     }
 
@@ -63,6 +68,9 @@ export class Silos {
             const ctr = this.map.get(name);
             inst = new ctr(id);
             this.ins.set(id, inst);
+            if (typeof inst.onWake == 'function') {
+                await inst.onWake();
+            }
         }
         return await inst[method].call(inst, args);
     }
