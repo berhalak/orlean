@@ -1,0 +1,32 @@
+{
+	"name": "@berhalak/ts-template",
+	"private": false,
+	"version": "0.0.1",
+	"description": "Typescript template",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"test": "jest",
+		"build": "tsc",
+		"compile": "tsc --noEmit",
+		"watch": "jest --watch"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/berhalak/ts-template.git"
+	},
+	"author": "",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/berhalak/ts-template/issues"
+	},
+	"homepage": "https://github.com/berhalak/ts-template#readme",
+	"devDependencies": {
+		"@types/jest": "^25.1.0",
+		"@types/node": "^13.5.0",
+		"jest": "^25.1.0",
+		"ts-jest": "^25.0.0",
+		"ts-node": "^8.6.2",
+		"typescript": "^3.7.5"
+	}
+}
