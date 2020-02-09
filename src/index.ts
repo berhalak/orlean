@@ -4,25 +4,34 @@ import { Packer } from "packer-js";
 
 
 export interface SilosPersistance {
-    save(id: string, model: any): Promise<void>;
-    read(id: string): Promise<any>;
+    save(type: string, id: string, model: any): Promise<void>;
+    read(type: string, id: string): Promise<any>;
 }
 
 class DefaultPersistance implements SilosPersistance {
     map = new Map<string, any>();
 
-    save(id: string, model: any): Promise<void> {
-        this.map.set(id, model);
+    save(type: string, id: string, model: any): Promise<void> {
+        const key = `${type}-${id}`;
+        this.map.set(key, model);
         return Promise.resolve();
     }
 
-    read(id: string): Promise<any> {
-        return Promise.resolve(this.map.get(id));
+    read(type: string, id: string): Promise<any> {
+        const key = `${type}-${id}`;
+        return Promise.resolve(this.map.get(key));
     }
 }
 
 function getId(model: any) {
     return typeof model.id == 'function' ? model.id() : model.id ?? model._id;
+}
+
+function getType(model: any) {
+    if (model && model.constructor) {
+        return model.constructor['$type'] ?? model.constructor.name;
+    }
+    return model.type ?? "Object";
 }
 
 export class Silos {
@@ -62,6 +71,8 @@ export class Silos {
         return c.name + ":" + UUID();
     }
 
+    static activeCalls: any = {};
+
     async invoke(name: string, id: string, method: string, args: any[]) {
         let inst = this.ins.get(id);
         if (!inst) {
@@ -72,11 +83,24 @@ export class Silos {
                 await inst.onWake();
             }
         }
-        return await inst[method].call(inst, args);
+        const key = `${name}-${id}`;
+        while (key in Silos.activeCalls) {
+            await Silos.activeCalls[key];
+        }
+        // call actor
+        const currentCall = inst[method].call(inst, args);
+        // set active call by id
+        Silos.activeCalls[key] = currentCall;
+        // await current call
+        const result = await currentCall;
+        if (Silos.activeCalls[key] == currentCall) {
+            delete Silos.activeCalls[key];
+        }
+        return result;
     }
 
     async fresh<T>(model: T) {
-        const data = await Silos.persistance.read(getId(model));
+        const data = await Silos.persistance.read(getType(model), getId(model));
         if (!data) return;
         Packer.register(model);
         const unpacked = Packer.unpack<T>(data);
@@ -85,14 +109,14 @@ export class Silos {
 
     async read<T>(model: T) {
         Packer.register(model);
-        return await wait(Silos.persistance.read(getId(model)))
+        return await wait(Silos.persistance.read(getType(model), getId(model)))
             .map(x => Packer.unpack<T>(x))
             .value();
     }
 
     async snap<T>(model: any) {
         const packed = Packer.pack(model);
-        await Silos.persistance.save(getId(model), packed);
+        await Silos.persistance.save(getType(model), getId(model), packed);
     }
 }
 
