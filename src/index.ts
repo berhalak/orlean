@@ -19,23 +19,34 @@ class DefaultPersistance implements SilosPersistance {
 
     read(type: string, id: string): Promise<any> {
         const key = `${type}-${id}`;
-        return Promise.resolve(this.map.get(key));
+        return Promise.resolve(this.map.get(key) ?? null);
     }
 }
 
 function getId(model: any) {
-    return typeof model.id == 'function' ? model.id() : model.id ?? model._id;
+    return typeof model.id == 'function' ? model.id() : (model.id ?? model._id);
 }
 
 function getType(model: any) {
-    if (model && model.constructor) {
+    if (model && model.constructor && typeof model == 'object') {
         return model.constructor['$type'] ?? model.constructor.name;
+    }
+    if (typeof model == 'function' && model.name) {
+        return model.name;
+    }
+    if (typeof model == 'function' && model.$type) {
+        return model.type;
     }
     return model.type ?? "Object";
 }
 
 export class Silos {
-    static async clear() {
+    static async clear(force = false) {
+        if (force) {
+            this.instance.ins.clear();
+            this.instance.map.clear();
+            return;
+        }
         for (let actor of this.instance.ins.values()) {
             if (typeof actor.onSleep == 'function') {
                 await actor.onSleep();
@@ -107,11 +118,24 @@ export class Silos {
         Object.assign(model, unpacked);
     }
 
-    async read<T>(model: T) {
-        Packer.register(model);
-        return await wait(Silos.persistance.read(getType(model), getId(model)))
-            .map(x => Packer.unpack<T>(x))
-            .value();
+    async read<T>(model: T): Promise<T>
+    async read<T>(ctr: Constructor<T>, id: string): Promise<T>
+    async read<T>(...args: any[]): Promise<T> {
+        if (args.length == 1) {
+            const model = args[0];
+            Packer.register(model);
+            return await wait(Silos.persistance.read(getType(model), getId(model)))
+                .map(x => Packer.unpack<T>(x))
+                .value();
+        } else {
+            const ctr = args[0];
+            const id = args[1];
+            Packer.register(ctr);
+            return await wait(Silos.persistance.read(getType(ctr), id))
+                .do(x => console.log(x))
+                .map(x => Packer.unpack<T>(x))
+                .value();
+        }
     }
 
     async snap<T>(model: any) {
@@ -173,4 +197,9 @@ export function ref<T>(factory: Constructor<T>, id?: string): T {
     Object.setPrototypeOf(inst, proxy);
 
     return inst as T;
+}
+
+export async function load<T>(factory: Constructor<T>, id: string): Promise<T> {
+    const model = await Silos.instance.read(factory, id);
+    return model ?? new factory(id);
 }

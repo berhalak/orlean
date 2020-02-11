@@ -1,5 +1,5 @@
 import { Packer } from "packer-js"
-import { Silos, ref, fresh, snap } from './index';
+import { Silos, ref, fresh, snap, load } from './index';
 
 test('sample test', async () => {
 
@@ -48,4 +48,33 @@ test('sample test', async () => {
 	expect(Actor.instanceCount).toBe(2);
 
 
+
+
 })
+
+test('model test', async () => {
+	await Silos.clear(true);
+
+	class Model {
+		constructor(private id: string) {
+
+		}
+		name = '';
+		toString() {
+			return this.name;
+		}
+	}
+
+	const bob = new Model("bob");
+	const john = new Model("john");
+
+	bob.name = "Bob";
+	john.name = "John";
+
+	await snap(bob); await snap(john);
+
+	const loadedBob = await load(Model, "bob");
+	const loadedJohn = await load(Model, "john");
+
+	expect(bob.toString()).toBe(loadedBob.toString());
+});
