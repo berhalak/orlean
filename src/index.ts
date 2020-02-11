@@ -2,6 +2,13 @@ import { UUID } from "@berhalak/js";
 import { wait } from "@berhalak/monads";
 import { Packer } from "packer-js";
 
+export {
+	Dictionary
+}
+
+export function uid() {
+	return UUID();
+}
 
 export interface SilosPersistance {
 	save(type: string, id: string, model: any): Promise<void>;
