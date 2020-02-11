@@ -167,12 +167,16 @@ export async function fresh<T>(model: T) {
 }
 
 export class Reference {
-	unpack() {
-
+	$factory = '';
+	id = '';
+	unpack(data: any) {
+		Object.assign(this, data);
+		return ref(Silos.instance.map.get(this.$factory), this.id);
 	}
 }
 
 type Constructor<T> = new (...args: any[]) => T;
+
 
 export function ref<T>(factory: Constructor<T>, id?: string): T {
 	const proxy = {} as any;
@@ -183,15 +187,19 @@ export function ref<T>(factory: Constructor<T>, id?: string): T {
 
 	Silos.register(factory);
 
+	const $data: any = { m: [], n: factory.name }
+
 	// get all methods
 	for (let key of getMethods(proto)) {
 		proxy[key] = async function (...args: any[]) {
 			return await Silos.instance.invoke(factory.name, id, key, args);
 		}
+		$data.m.push(key);
 	}
 
 	const inst: any = {
 		id: id ?? "",
+		$factory: factory.name,
 		$type: "Reference"
 	};
 
