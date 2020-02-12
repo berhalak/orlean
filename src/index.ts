@@ -13,20 +13,26 @@ export function uid() {
 export interface SilosPersistance {
 	save(type: string, id: string, model: any): Promise<void>;
 	read(type: string, id: string): Promise<any>;
+	list(type: string): Promise<any[]>;
 }
 
 class DefaultPersistance implements SilosPersistance {
-	map = new Map<string, any>();
+	map = new Map<string, Map<string, any>>();
 
 	save(type: string, id: string, model: any): Promise<void> {
-		const key = `${type}-${id}`;
-		this.map.set(key, model);
+		if (!this.map.has(type)) this.map.set(type, new Map());
+		this.map.get(type).set(id, model);
 		return Promise.resolve();
 	}
 
 	read(type: string, id: string): Promise<any> {
-		const key = `${type}-${id}`;
-		return Promise.resolve(this.map.get(key) ?? null);
+		const model = this.map.get(type)?.get(id);
+		return Promise.resolve(model);
+	}
+
+	list(type: string): Promise<any> {
+		const all = [...this.map.get(type)?.values()];
+		return Promise.resolve(all);
 	}
 }
 
@@ -149,6 +155,10 @@ export class Silos {
 		const packed = Packer.pack(model);
 		await Silos.persistance.save(getType(model), getId(model), packed);
 	}
+
+	async list<T>(type: Constructor<T>) {
+		return (await Silos.persistance.list(getType(type))).map(x => Packer.unpack<T>(x));
+	}
 }
 
 const getMethods = (obj: any) => {
@@ -169,6 +179,10 @@ export async function read<T>(model: T) {
 	return await Silos.instance.read(model);
 }
 
+export async function list<T>(type: Constructor<T>) {
+	return await Silos.instance.list(type);
+}
+
 export async function fresh<T>(model: T) {
 	await Silos.instance.fresh(model);
 }
@@ -179,6 +193,13 @@ export class Reference {
 	unpack(data: any) {
 		Object.assign(this, data);
 		return ref(Silos.instance.map.get(this.$factory), this.id);
+	}
+
+	constructor(model?: any) {
+		if (model && model.$factory) {
+			this.$factory = model.$factory;
+			this.id = model.id;
+		}
 	}
 }
 
@@ -219,3 +240,16 @@ export async function load<T>(factory: Constructor<T>, id: string): Promise<T> {
 	const model = await Silos.instance.read(factory, id);
 	return model ?? new factory(id);
 }
+
+
+export interface ActorConstructor {
+	new <T>(type: Constructor<T>, id?: string): T;
+}
+
+export const Actor: ActorConstructor = function <T>(type: Constructor<T>, id?: string) {
+	return ref(type, id);
+} as any;
+
+export const Root: ActorConstructor = function <T>(type: Constructor<T>, id?: string) {
+	return ref(type, id);
+} as any;
